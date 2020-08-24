@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import skimage.measure, skimage.exposure, skimage.filters
 from skimage.feature import blob_log
 import pandas as pd
+from scipy.signal import correlate2d, find_peaks
+
 
 #Setup the parser for commandline interface
 parser = argparse.ArgumentParser(description='Process the IPI images.')
@@ -15,6 +17,9 @@ parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
 parser.add_argument('--crop',type=tuple,default=(200,600,200,600),help="Crop Limits")
 parser.add_argument('--save_images',type=int, default=0,help = "Saves masks and histograms")
 args = parser.parse_args()
+
+prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4}
+
 
 def main():
     #Pandas is used to store the data for each frame and
@@ -52,15 +57,42 @@ def analyze_IPI(filename,ii,save_images):
     #plot
     #todo make it optional to plot
     fig,ax = plt.subplots(1)
-    ax.imshow(im, cmap='gray')
-    for blob in blobs:
+
+    #ax.imshow(im, cmap='gray')
+    for ii,blob in enumerate(blobs):
         x, y, r = blob
-        c = plt.Circle((y,x),r)
-        ax.add_patch(c)
-    plt.show()
+        r_rounded = np.floor(r)
+        subimage = im[int(x-r_rounded):int(x+r_rounded),int(y-r_rounded):int(y+r_rounded)]
+        shift = analyze_fringes(subimage)
+
+        N_fringes = 2*r/shift
+        size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
+        print('Particle %i: %f um' % (ii,size*1e6))
+
+
 
     #todo add the sizing part from the fringe patterns
 
+def analyze_fringes(subimage):
+    im_norm = (subimage - np.mean(subimage))
+    im_fft = np.fft.rfft2(im_norm,norm="ortho")
+
+    test = correlate2d(im_norm,im_norm,mode='same')
+    test = test[15:,15]
+    peaks = find_peaks(test)
+    sorted_peaks = np.sort(peaks[0])
+    first_peak = sorted_peaks[0]
+
+    return first_peak
+
+def fringes2size(N,m,lamb,f_num,theta):
+    alfa = np.arcsin(1/f_num/2/2)
+
+    A = 2*lamb*alfa
+    B = (np.cos(theta/2) + (m*np.sin(theta/2)) / np.sqrt(m**2-2*m*np.cos(theta/2) + 1))
+
+    d = N*A/B
+    return d
 
 
 if __name__ == "__main__":
