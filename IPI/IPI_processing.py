@@ -56,7 +56,7 @@ def analyze_IPI(filename,ii,save_images):
 
     #plot
     #todo make it optional to plot
-    fig,ax = plt.subplots(1)
+    #fig,ax = plt.subplots(1)
 
     #ax.imshow(im, cmap='gray')
     area = []
@@ -67,7 +67,8 @@ def analyze_IPI(filename,ii,save_images):
         #plt.imshow(subimage)
         #plt.show()
         shift = analyze_fringes(subimage)
-
+        if shift == -1:
+            continue
         N_fringes = 2*r/shift
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
         print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
@@ -95,7 +96,10 @@ def analyze_fringes(subimage):
     peaks = find_peaks(test)
 
     sorted_peaks = np.sort(peaks[0])
-    first_peak = sorted_peaks[0]
+    if sorted_peaks.__len__() != 0:
+        first_peak = sorted_peaks[0]
+    else:
+        first_peak = -1
 
     return first_peak
 
