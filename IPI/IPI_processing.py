@@ -39,9 +39,9 @@ def main():
         else:
             continue
     #Create a dictionary from the list of results and make a dataframe from it
-    #df = pd.DataFrame({ i:pd.Series(value) for i, value in enumerate(listan) })
+    df = pd.DataFrame({ i:pd.Series(value) for i, value in enumerate(listan) })
     #Save the dataframe as csv
-    #df.to_csv('./df_list.csv')
+    df.to_csv('./df_list.csv')
 
 def analyze_IPI(filename,ii,save_images):
     #Finds the defocused particles using LoG blob detection.
@@ -59,27 +59,41 @@ def analyze_IPI(filename,ii,save_images):
     fig,ax = plt.subplots(1)
 
     #ax.imshow(im, cmap='gray')
+    area = []
     for ii,blob in enumerate(blobs):
         x, y, r = blob
         r_rounded = np.floor(r)
         subimage = im[int(x-r_rounded):int(x+r_rounded),int(y-r_rounded):int(y+r_rounded)]
+        #plt.imshow(subimage)
+        #plt.show()
         shift = analyze_fringes(subimage)
 
         N_fringes = 2*r/shift
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
-        print('Particle %i: %f um' % (ii,size*1e6))
-
+        print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
+        area.append(size)
+    return np.array(area)
 
 
     #todo add the sizing part from the fringe patterns
 
 def analyze_fringes(subimage):
     im_norm = (subimage - np.mean(subimage))
-    im_fft = np.fft.rfft2(im_norm,norm="ortho")
-
+    #todo prehaps implement a fringe contrast
+    #fringe_contrast = (np.max(subimage[5:25,5:25]) - np.min(subimage[5:25,5:25]))/(np.max(subimage[5:25,5:25]) + np.min(subimage[5:25,5:25]))
+    #print("Fringe Contrast: %f" % fringe_contrast)
     test = correlate2d(im_norm,im_norm,mode='same')
     test = test[15:,15]
+#   For dedugging
+#    lags = np.arange(0,17)
+#    test2 = test /(16-lags + 1)
+#    test2 = test2/test2[0]
+#    test = test/test[0]
+#    plt.plot(test)
+#    plt.plot(test2)
+#    plt.show()
     peaks = find_peaks(test)
+
     sorted_peaks = np.sort(peaks[0])
     first_peak = sorted_peaks[0]
 
@@ -88,7 +102,7 @@ def analyze_fringes(subimage):
 def fringes2size(N,m,lamb,f_num,theta):
     alfa = np.arcsin(1/f_num/2/2)
 
-    A = 2*lamb*alfa
+    A = 2*lamb/alfa
     B = (np.cos(theta/2) + (m*np.sin(theta/2)) / np.sqrt(m**2-2*m*np.cos(theta/2) + 1))
 
     d = N*A/B
