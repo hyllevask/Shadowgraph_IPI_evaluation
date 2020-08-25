@@ -32,6 +32,8 @@ def main():
     #Loop over the files in the dir
     for ii,filename in enumerate(os.listdir(args.indir)):
         print(ii)
+        if ii == 57:
+            print('stop')
         if filename.endswith(('.bmp','.png')):
             #Call the main analyzing function
             area = analyze_IPI(filename,ii,args.save_images)
@@ -66,7 +68,9 @@ def analyze_IPI(filename,ii,save_images):
         subimage = im[int(x-r_rounded):int(x+r_rounded),int(y-r_rounded):int(y+r_rounded)]
         #plt.imshow(subimage)
         #plt.show()
-        shift = analyze_fringes(subimage)
+        if subimage.size == 0:
+            continue
+        shift = analyze_fringes(subimage,r_rounded)
         if shift == -1:
             continue
         N_fringes = 2*r/shift
@@ -78,13 +82,15 @@ def analyze_IPI(filename,ii,save_images):
 
     #todo add the sizing part from the fringe patterns
 
-def analyze_fringes(subimage):
+def analyze_fringes(subimage,r):
+    r = int(r)
     im_norm = (subimage - np.mean(subimage))
     #todo prehaps implement a fringe contrast
     #fringe_contrast = (np.max(subimage[5:25,5:25]) - np.min(subimage[5:25,5:25]))/(np.max(subimage[5:25,5:25]) + np.min(subimage[5:25,5:25]))
     #print("Fringe Contrast: %f" % fringe_contrast)
+    print("r= %f" % r)
     test = correlate2d(im_norm,im_norm,mode='same')
-    test = test[15:,15]
+    test = test[r:,r]
 #   For dedugging
 #    lags = np.arange(0,17)
 #    test2 = test /(16-lags + 1)
