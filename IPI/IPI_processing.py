@@ -16,6 +16,7 @@ parser = argparse.ArgumentParser(description='Process the IPI images.')
 parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
 parser.add_argument('--crop',type=tuple,default=(200,600,200,600),help="Crop Limits")
 parser.add_argument('--save_images',type=int, default=0,help = "Saves masks and histograms")
+parser.add_argument('--threshold',type=float,default=0.05,help="Threshold for the LoG blob estimation.")
 args = parser.parse_args()
 
 prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4}
@@ -52,7 +53,7 @@ def analyze_IPI(filename,ii,save_images):
     #Read images
     im = plt.imread(args.indir + '/' + filename)
     #Use the LoG blob detection
-    blobs = blob_log(im,min_sigma=8,max_sigma=20,num_sigma=10)
+    blobs = blob_log(im,min_sigma=8,max_sigma=20,num_sigma=10,threshold=args.threshold)
     #Scale to correct radii
     blobs[:,2] = blobs[:,2]*np.sqrt(2)
 
