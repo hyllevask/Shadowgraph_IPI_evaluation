@@ -90,7 +90,7 @@ def analyze_fringes(subimage,r):
     #print("Fringe Contrast: %f" % fringe_contrast)
     print("r= %f" % r)
     test = correlate2d(im_norm,im_norm,mode='same')
-    test = test[r:,r]
+    test = test[r-1:,r-1]
 #   For dedugging
 #    lags = np.arange(0,17)
 #    test2 = test /(16-lags + 1)
