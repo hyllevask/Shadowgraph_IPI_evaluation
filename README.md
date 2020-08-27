@@ -13,3 +13,13 @@ python droplet_shadow.py
 -crop
 -save_images
 ```
+
+
+
+## Requires
+* numpy
+* pandas
+* matplotlib
+* skimage
+* scipy
+* filterpy
