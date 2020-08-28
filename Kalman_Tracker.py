@@ -53,7 +53,7 @@ class Tracker(object):
                 x,y,r = d
                 temp_track = Track(x,y,r,self.track_count,self.dt)
                 self.tracks.append(temp_track)
-
+                self.track_count += 1
 
         # DATA ASSOCIATION
 
@@ -87,13 +87,14 @@ class Tracker(object):
         #CHeck is track should be deleted
         for ii,track in enumerate(self.tracks):
             if track.undetected_frames > 2:
+                self.deleted_tracks.append(track)
                 self.tracks[ii] = -1
 
-        new_deleted = [track for track in self.tracks if track.undetected_frames > 3 ]
-        new_tracks = [track for track in self.tracks if track.undetected_frames <= 3 ]
 
-        self.tracks = new_tracks
-        self.deleted_tracks.append(new_deleted)
+        updated_tracks = [track for track in self.tracks if track != -1]
+
+        self.tracks = updated_tracks
+
         #CHeck for unassigned detects
 
         #Possibly start new tracks
