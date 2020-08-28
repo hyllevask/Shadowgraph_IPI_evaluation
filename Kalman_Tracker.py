@@ -21,9 +21,9 @@ class Track(object):
                         [0,1,0,0,0],
                         [0,0,0,0,1]])
         self.kf.P = self.kf.P * 100.
-        self.kf.R = np.array([[10],
-                         [10],
-                         [40]])
+        #self.kf.R = np.array([[10],
+        #                 [10],
+        #                 [40]])
 
         self.track_ID = t_ID
         self.undetected_frames = 0
@@ -103,6 +103,6 @@ class Tracker(object):
         #THe index off assignment is the track and the vale is the corresponding data
         for ii,ass in enumerate(assignment):
             self.tracks[ii].kf.update(data[ass][:,np.newaxis])
-            self.tracks[ii].trace.append()
+            self.tracks[ii].trace.append(self.tracks[ii].kf.x)
 
 
