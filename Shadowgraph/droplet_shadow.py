@@ -17,7 +17,7 @@ args = parser.parse_args()
 
 def main():
     #Pandas is used to store the data for each frame and
-    import pandas as pd
+    import pickle
     listan = []     #The numpy arrays will be stored in this array
     if args.save_images == 1:
         print("Image Save Enabled")
@@ -28,14 +28,16 @@ def main():
         print(ii)
         if filename.endswith('.bmp'):
             #Call the main analyzing function
-            area = analyze_image(filename,ii,args.save_images)
-            listan.append(area)
+            data = analyze_image(filename,ii,args.save_images)
+            listan.append(data)
         else:
             continue
+
+    pickle.dump(listan,open('processed_data.p','wb'))
     #Create a dictionary from the list of results and make a dataframe from it
-    df = pd.DataFrame({ i:pd.Series(value) for i, value in enumerate(listan) })
+    #df = pd.DataFrame({ i:pd.Series(value) for i, value in enumerate(listan) })
     #Save the dataframe as csv
-    df.to_csv('./df_list.csv')
+    #df.to_csv('./df_list.csv')
 
 def analyze_image(filename,ii,save_images):
 
@@ -53,19 +55,20 @@ def analyze_image(filename,ii,save_images):
     #Label and get regionprops
     all_labels = skimage.measure.label(im_bw)
     props = skimage.measure.regionprops(all_labels)
-    area = []
+    data = []
     #Extract the area for each particle
     for prop in props:
-        area.append(prop.area)
+        r,c = prop.centroid
+        data.append(np.array([r,c,prop.area]))
     if save_images == 1:
         #Generate and save images
         plt.figure(1,clear=True)
         plt.imshow(im < 180)
         plt.savefig('result_images/bw'+str(ii))
-        plt.figure(2,clear=True)
-        hist, hist_centers =skimage.exposure.histogram(np.array(area))
-        plt.plot(hist_centers,hist,lw=2)
-        plt.savefig('result_images/hist'+str(ii))
-    return np.array(area)
+        #plt.figure(2,clear=True)
+        #hist, hist_centers =skimage.exposure.histogram(np.array(area))
+        #plt.plot(hist_centers,hist,lw=2)
+        #plt.savefig('result_images/hist'+str(ii))
+    return data
 if __name__ == "__main__":
     main()

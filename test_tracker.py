@@ -20,13 +20,14 @@ def generate_data(filename,N_frames):
         data_list.append(data)
     pickle.dump(data_list,open(filename, "wb"))
 
-generate_data('test_data.p',100)
-data_list = pickle.load(open('test_data.p','rb'))
+#generate_data('test_data.p',100)
+data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
 
 
 tracker = Tracker()
 
-for dd in data_list:
+for ii,dd in enumerate(data_list):
+    print(ii)
     tracker.Update_tracks(dd)
 x_list = []
 y_list = []
@@ -39,14 +40,17 @@ for ii,track in enumerate(tracker.tracks):
 
 f1 = plt.figure(1,clear=True)
 a1 = f1.gca()
-p1 = a1.plot(x_list[0],y_list[0])
+for (x,y) in zip(x_list,y_list):
+    a1.plot(x,y)
 plt.show()
 
 f2 = plt.figure(2,clear=True)
 a2 = f2.gca()
-p2 =a2.hist(r_list[0])
+for frame in data_list:
+    for particle in frame:
+        a2.plot(particle[0],particle[1],'x')
 plt.show()
-
+'''
 f3 = plt.figure(3,clear=True)
 a3 = f3.gca()
 p3 = a3.plot(x_list[1],y_list[1])
@@ -56,3 +60,4 @@ f4 = plt.figure(4,clear=True)
 a4 = f4.gca()
 p4 = a4.hist(r_list[1])
 plt.show()
+'''
