@@ -42,7 +42,7 @@ class Tracker(object):
         self.deleted_tracks = []
         self.track_count = 0
         self.dt = 1
-        self.max_cost = 4
+        self.max_cost = 10
 
     def Update_tracks(self,data):
         #Data is a list where each element is a tuple with x,y,r

@@ -44,14 +44,19 @@ f1 = plt.figure(1,clear=True)
 a1 = f1.gca()
 for (x,y) in zip(x_list,y_list):
     a1.plot(x,y)
-plt.show()
+plt.draw()
 
 f2 = plt.figure(2,clear=True)
 a2 = f2.gca()
 for frame in data_list:
     for particle in frame:
         a2.plot(particle[0],particle[1],'x')
-plt.show()
+plt.draw()
+
+#f3 = plt.figure(3,clear=True)
+#a3 = f3.gca()
+#p3 = a3.plot
+
 '''
 f3 = plt.figure(3,clear=True)
 a3 = f3.gca()
