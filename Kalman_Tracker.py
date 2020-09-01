@@ -42,18 +42,23 @@ class Tracker(object):
         self.deleted_tracks = []
         self.track_count = 0
         self.dt = 1
+        self.max_cost = 4
 
     def Update_tracks(self,data):
         #Data is a list where each element is a tuple with x,y,r
 
         #If no tracks are stored create new tracks from the data
         if (len(self.tracks) == 0):
+            print("Initiating Tracks")
             for d in data:
                 x,y,r = d
                 temp_track = Track(x,y,r,self.track_count,self.dt)
+                temp_track.trace.append(temp_track.kf.x)
                 self.tracks.append(temp_track)
                 self.track_count += 1
-
+            print("Complete")
+            return
+        print("Updating Tracks")
         # DATA ASSOCIATION
 
         N = len(self.tracks)
@@ -69,8 +74,10 @@ class Tracker(object):
                 r_pred = track.kf.x[-1]
 
                 distance = np.sqrt((x_pred-x)**2 + (y_pred-y)**2 + (r_pred-r)**2)
-                cost[ii][jj] = distance
-
+                if distance < self.max_cost:
+                    cost[ii][jj] = distance
+                else:
+                    cost[ii][jj] = 1e99
         # Using Hungarian Algorithm assign the correct detected measurements
         # to predicted tracks
         assignment = []
@@ -79,7 +86,13 @@ class Tracker(object):
             assignment.append(-1)
         row_ind, col_ind = linear_sum_assignment(cost)
         for i in range(len(row_ind)):
-            assignment[row_ind[i]] = col_ind[i]
+            #print(cost[row_ind[i], col_ind[i]].sum())
+            if cost[row_ind[i], col_ind[i]] == 1e99:
+                assignment[row_ind[i]] = -2
+                #print("hejhej")
+            else:
+                assignment[row_ind[i]] = col_ind[i]
+                #print(cost[row_ind[i], col_ind[i]].sum())
 
         #Check for unassigned tracks
 
@@ -102,7 +115,18 @@ class Tracker(object):
         #Loop over the tracks and update the state with the assigned measurement
         #THe index off assignment is the track and the vale is the corresponding data
         for ii,ass in enumerate(assignment):
-            self.tracks[ii].kf.update(data[ass][:,np.newaxis])
-            self.tracks[ii].trace.append(self.tracks[ii].kf.x)
-
+            if ass != -2 and ass != -1:
+                self.tracks[ii].kf.update(data[ass][:,np.newaxis])
+                self.tracks[ii].trace.append(self.tracks[ii].kf.x)
+            else:
+                #print("tjolahop")
+                continue
+    def get_results(self):
+        #Returns the results for each track
+        results = np.zeros(shape=(self.tracks.__len__(), 3))
+        for ii,track in enumerate(self.tracks):
+            results[ii,0] = np.mean(np.array([x[-1] for x in track.trace]))
+            results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))
+            results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))
+        return results
 

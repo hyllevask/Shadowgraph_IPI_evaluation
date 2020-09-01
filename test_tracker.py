@@ -37,6 +37,8 @@ for ii,track in enumerate(tracker.tracks):
     y_list.append(np.array([a[1] for a in track.trace]))
     r_list.append(np.array([a[4] for a in track.trace]))
 
+results = tracker.get_results()
+
 
 f1 = plt.figure(1,clear=True)
 a1 = f1.gca()
