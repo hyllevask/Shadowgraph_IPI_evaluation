@@ -9,6 +9,7 @@ import skimage.measure, skimage.exposure, skimage.filters
 from skimage.feature import blob_log
 import pandas as pd
 from scipy.signal import correlate2d, find_peaks
+import pickle
 
 
 #Setup the parser for commandline interface
@@ -37,14 +38,11 @@ def main():
             print('stop')
         if filename.endswith(('.bmp','.png')):
             #Call the main analyzing function
-            area = analyze_IPI(filename,ii,args.save_images)
-            listan.append(area)
+            data = analyze_IPI(filename,ii,args.save_images)
+            listan.append(data)
         else:
             continue
-    #Create a dictionary from the list of results and make a dataframe from it
-    df = pd.DataFrame({ i:pd.Series(value) for i, value in enumerate(listan) })
-    #Save the dataframe as csv
-    df.to_csv('./df_list.csv')
+    pickle.dump(listan,open('processed_IPI_data.p','wb'))
 
 def analyze_IPI(filename,ii,save_images):
     #Finds the defocused particles using LoG blob detection.
@@ -62,7 +60,7 @@ def analyze_IPI(filename,ii,save_images):
     #fig,ax = plt.subplots(1)
 
     #ax.imshow(im, cmap='gray')
-    area = []
+    data = []
     for ii,blob in enumerate(blobs):
         x, y, r = blob
         r_rounded = np.floor(r)
@@ -77,8 +75,8 @@ def analyze_IPI(filename,ii,save_images):
         N_fringes = 2*r/shift
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
         print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
-        area.append(size)
-    return np.array(area)
+        data.append(np.array([x,y,size]))
+    return data
 
 
     #todo add the sizing part from the fringe patterns
