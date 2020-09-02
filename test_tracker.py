@@ -21,8 +21,8 @@ def generate_data(filename,N_frames):
     pickle.dump(data_list,open(filename, "wb"))
 
 #generate_data('test_data.p',100)
-data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
-
+#data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
+data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
 
 tracker = Tracker()
 
