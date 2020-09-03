@@ -21,8 +21,8 @@ def generate_data(filename,N_frames):
     pickle.dump(data_list,open(filename, "wb"))
 
 #generate_data('test_data.p',100)
-data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
-#data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
+#data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
+data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
 
 tracker = Tracker()
 
@@ -59,6 +59,13 @@ a2 = f2.gca()
 for (x,y) in zip(xd_list,yd_list):
     a2.plot(x,y)
 plt.draw()
+
+f3 = plt.figure(3,clear=True)
+a3 = f3.gca()
+for (x,y) in zip(xd_list,yd_list):
+    a3.hist(results[:,0])
+plt.draw()
+
 
 
 '''

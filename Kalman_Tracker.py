@@ -117,9 +117,10 @@ class Tracker(object):
             if assignment[ii] == -1 or assignment[ii] == -2:
                 track.undetected_frames += 1
         #CHeck is track should be deleted
+        print("Deleting Track")
         for ii,track in enumerate(self.tracks):
             if track.undetected_frames > 2:
-                print("Deleting Track")
+
                 self.deleted_tracks.append(track)
                 self.tracks[ii] = -1
 
@@ -135,11 +136,11 @@ class Tracker(object):
             self.tracks.append(Track(x,y,r,self.track_count,self.dt))
             self.track_count += 1
 
-
+        print("Adding Track")
         #Possibly start new tracks
         for track in self.tracks:
-            if track.life > 2 and track.tentative == True:
-                print("Adding Track")
+            if track.life > 2 and track.tentative == True and track.undetected_frames < 3:
+
                 track.tentative = False
 
 
@@ -152,11 +153,18 @@ class Tracker(object):
 
     def get_results(self):
         #Returns the results for each track
-        results = np.zeros(shape=(self.tracks.__len__(), 3))
-        for ii,track in enumerate(self.tracks):
-            print(ii)
-            results[ii,0] = np.mean(np.array([x[-1] for x in track.trace]))
-            results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))
-            results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))
+
+        all_tracks = self.tracks + self.deleted_tracks
+        results = np.zeros(shape=(all_tracks.__len__(), 3))
+        for ii,track in enumerate(all_tracks):
+            #print(ii)
+            if track.trace.__len__() > 3:
+                results[ii,0] = np.mean(np.array([x[-1] for x in track.trace]))
+                results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))
+                results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))
+            else:
+                results[ii,:] = np.nan
+        results = results[~np.isnan(results).any(axis=1)]
+
         return results
 
