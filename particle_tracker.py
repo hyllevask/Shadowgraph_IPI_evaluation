@@ -5,26 +5,13 @@ import pickle
 plt.ion()
 
 #Generate or load data
-
-#Generate
-def generate_data(filename,N_frames):
-    import pickle
-    size = 10
-    start1 = np.array([50,0,10])
-    start2 = np.array([0,0,20])
-    data = [start1,start2]
-    data_list = []
-    for ii in np.arange(0,N_frames):
-        data = [np.array([10,(jj+1),0]) + x for jj,x in enumerate(data)]
-        data = [x + np.random.randn(3)*np.array([1,1,0.2]) for x in data]
-        data_list.append(data)
-    pickle.dump(data_list,open(filename, "wb"))
-
 #generate_data('test_data.p',100)
 #data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
 data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
+dt = 1/5000
+print ('dt = %f' % dt)
 
-tracker = Tracker()
+tracker = Tracker(dt)
 
 for ii,dd in enumerate(data_list):
     #print(ii)
@@ -62,12 +49,18 @@ plt.draw()
 
 f3 = plt.figure(3,clear=True)
 a3 = f3.gca()
-for (x,y) in zip(xd_list,yd_list):
-    a3.hist(results[:,0])
+a3.hist(results[:,0]*1e6)
+plt.title("Size distribution")
+plt.draw()
+
+f4 = plt.figure(4,clear=True)
+a4 = f4.gca()
+a4.hist((np.sqrt(results[:,1]) + np.sqrt(results[:,2]))**2 *1000)
+plt.title("Velocity distribution (mm/2)")
 plt.draw()
 
 
-
+input("Press Any Key to Quit")
 '''
 f2 = plt.figure(2,clear=True)
 a2 = f2.gca()

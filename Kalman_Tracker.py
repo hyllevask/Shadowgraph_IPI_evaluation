@@ -38,12 +38,12 @@ class Track(object):
 class Tracker(object):
 
 
-    def __init__(self):
+    def __init__(self,dt):
         self.tracks = []
         self.deleted_tracks = []
         self.tentative_tracks = []
         self.track_count = 0
-        self.dt = 1
+        self.dt = dt
         self.max_cost = 10
 
     def Update_tracks(self,data):
@@ -58,9 +58,9 @@ class Tracker(object):
                 temp_track.trace.append(temp_track.kf.x)
                 self.tracks.append(temp_track)
                 self.track_count += 1
-            print("Complete")
+            #print("Complete")
             return
-        print("Updating Tracks")
+        #print("Updating Tracks")
         # DATA ASSOCIATION
 
         N = len(self.tracks)
@@ -117,7 +117,7 @@ class Tracker(object):
             if assignment[ii] == -1 or assignment[ii] == -2:
                 track.undetected_frames += 1
         #CHeck is track should be deleted
-        print("Deleting Track")
+        #print("Deleting Track")
         for ii,track in enumerate(self.tracks):
             if track.undetected_frames > 2:
 
@@ -136,7 +136,7 @@ class Tracker(object):
             self.tracks.append(Track(x,y,r,self.track_count,self.dt))
             self.track_count += 1
 
-        print("Adding Track")
+        #print("Adding Track")
         #Possibly start new tracks
         for track in self.tracks:
             if track.life > 2 and track.tentative == True and track.undetected_frames < 3:
@@ -160,8 +160,8 @@ class Tracker(object):
             #print(ii)
             if track.trace.__len__() > 3:
                 results[ii,0] = np.mean(np.array([x[-1] for x in track.trace]))
-                results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))
-                results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))
+                results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))/self.dt
+                results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))/self.dt
             else:
                 results[ii,:] = np.nan
         results = results[~np.isnan(results).any(axis=1)]

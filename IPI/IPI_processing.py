@@ -16,11 +16,11 @@ import pickle
 parser = argparse.ArgumentParser(description='Process the IPI images.')
 parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
 parser.add_argument('--crop',type=tuple,default=(200,600,200,600),help="Crop Limits")
-parser.add_argument('--save_images',type=int, default=0,help = "Saves masks and histograms")
+parser.add_argument('--save_images',type=int, default=1,help = "Saves masks and histograms")
 parser.add_argument('--threshold',type=float,default=0.05,help="Threshold for the LoG blob estimation.")
 args = parser.parse_args()
 
-prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4}
+prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4,'pp':50e-3/1080}
 
 
 def main():
@@ -30,12 +30,10 @@ def main():
     if args.save_images == 1:
         print("Image Save Enabled")
         if not os.path.exists("IPI_result_images"):
-            os.mkdir("result_images")       #Make result folder if it does not exsist
+            os.mkdir("IPI_result_images")       #Make result folder if it does not exsist
     #Loop over the files in the dir
     for ii,filename in enumerate(os.listdir(args.indir)):
         print(ii)
-        if ii == 57:
-            print('stop')
         if filename.endswith(('.bmp','.png')):
             #Call the main analyzing function
             data = analyze_IPI(filename,ii,args.save_images)
@@ -57,9 +55,16 @@ def analyze_IPI(filename,ii,save_images):
 
     #plot
     #todo make it optional to plot
-    #fig,ax = plt.subplots(1)
+    if save_images == 1:
+        fig,ax = plt.subplots(1)
+        ax.imshow(im, cmap='gray')
+        for blob in blobs:
+            y, x, r = blob
+            c = plt.Circle((x, y), r,color='red', linewidth=2, fill=False)
+            ax.add_patch(c)
+        plt.savefig('IPI_result_images/im'+str(ii))
 
-    #ax.imshow(im, cmap='gray')
+
     data = []
     for ii,blob in enumerate(blobs):
         x, y, r = blob
@@ -74,12 +79,12 @@ def analyze_IPI(filename,ii,save_images):
             continue
         N_fringes = 2*r/shift
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
-        print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
-        data.append(np.array([x,y,size]))
+        #print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
+        data.append(np.array([x*prop['pp'],y*prop['pp'],size]))
     return data
 
 
-    #todo add the sizing part from the fringe patterns
+
 
 def analyze_fringes(subimage,r):
     r = int(r)
