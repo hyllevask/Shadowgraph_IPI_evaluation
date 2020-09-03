@@ -26,8 +26,9 @@ class Track(object):
 
         self.track_ID = t_ID
         self.undetected_frames = 0
+        self.life = 1
         self.trace = []
-
+        self.tentative = True
 
     def update(self,x,y,r):
         z = np.array([x,y,r])
@@ -40,6 +41,7 @@ class Tracker(object):
     def __init__(self):
         self.tracks = []
         self.deleted_tracks = []
+        self.tentative_tracks = []
         self.track_count = 0
         self.dt = 1
         self.max_cost = 10
@@ -63,10 +65,12 @@ class Tracker(object):
 
         N = len(self.tracks)
         M = len(data)
+        all_detects = list(range(M))
         cost = np.zeros(shape=(N, M))
         for ii,track in enumerate(self.tracks):
             #Predicts every excisting track
             track.kf.predict()
+            track.life += 1
             for jj, d in enumerate(data):
                 x,y,r = d
                 x_pred = track.kf.x[0]
@@ -92,13 +96,30 @@ class Tracker(object):
                 #print("hejhej")
             else:
                 assignment[row_ind[i]] = col_ind[i]
-                #print(cost[row_ind[i], col_ind[i]].sum())
+                all_detects.remove(col_ind[i])
+
+        #Loop over the tracks and update the state with the assigned measurement
+        #THe index off assignment is the track and the vale is the corresponding data
+        for ii,ass in enumerate(assignment):
+            if ass != -2 and ass != -1:
+                self.tracks[ii].undetected_frames = 0
+                self.tracks[ii].kf.update(data[ass][:,np.newaxis])
+                self.tracks[ii].trace.append(self.tracks[ii].kf.x)
+                self.tracks[ii].life += 1
+            else:
+                #print("tjolahop")
+                continue
+
+
 
         #Check for unassigned tracks
-
+        for ii,track in enumerate(self.tracks):
+            if assignment[ii] == -1 or assignment[ii] == -2:
+                track.undetected_frames += 1
         #CHeck is track should be deleted
         for ii,track in enumerate(self.tracks):
             if track.undetected_frames > 2:
+                print("Deleting Track")
                 self.deleted_tracks.append(track)
                 self.tracks[ii] = -1
 
@@ -108,23 +129,32 @@ class Tracker(object):
         self.tracks = updated_tracks
 
         #CHeck for unassigned detects
+        for detects in all_detects:
+            d = data [detects]
+            x,y,r = data[detects]
+            self.tracks.append(Track(x,y,r,self.track_count,self.dt))
+            self.track_count += 1
+
 
         #Possibly start new tracks
+        for track in self.tracks:
+            if track.life > 2 and track.tentative == True:
+                print("Adding Track")
+                track.tentative = False
 
 
-        #Loop over the tracks and update the state with the assigned measurement
-        #THe index off assignment is the track and the vale is the corresponding data
-        for ii,ass in enumerate(assignment):
-            if ass != -2 and ass != -1:
-                self.tracks[ii].kf.update(data[ass][:,np.newaxis])
-                self.tracks[ii].trace.append(self.tracks[ii].kf.x)
-            else:
-                #print("tjolahop")
-                continue
+
+
+
+
+
+
+
     def get_results(self):
         #Returns the results for each track
         results = np.zeros(shape=(self.tracks.__len__(), 3))
         for ii,track in enumerate(self.tracks):
+            print(ii)
             results[ii,0] = np.mean(np.array([x[-1] for x in track.trace]))
             results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))
             results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))

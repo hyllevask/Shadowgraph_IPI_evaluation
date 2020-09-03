@@ -21,13 +21,13 @@ def generate_data(filename,N_frames):
     pickle.dump(data_list,open(filename, "wb"))
 
 #generate_data('test_data.p',100)
-#data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
-data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
+data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
+#data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
 
 tracker = Tracker()
 
 for ii,dd in enumerate(data_list):
-    print(ii)
+    #print(ii)
     tracker.Update_tracks(dd)
 x_list = []
 y_list = []
@@ -36,6 +36,14 @@ for ii,track in enumerate(tracker.tracks):
     x_list.append(np.array([a[0] for a in track.trace]))
     y_list.append(np.array([a[1] for a in track.trace]))
     r_list.append(np.array([a[4] for a in track.trace]))
+
+xd_list = []
+yd_list = []
+rd_list = []
+for ii,track in enumerate(tracker.deleted_tracks):
+    xd_list.append(np.array([a[0] for a in track.trace]))
+    yd_list.append(np.array([a[1] for a in track.trace]))
+    rd_list.append(np.array([a[4] for a in track.trace]))
 
 results = tracker.get_results()
 
@@ -48,6 +56,14 @@ plt.draw()
 
 f2 = plt.figure(2,clear=True)
 a2 = f2.gca()
+for (x,y) in zip(xd_list,yd_list):
+    a2.plot(x,y)
+plt.draw()
+
+
+'''
+f2 = plt.figure(2,clear=True)
+a2 = f2.gca()
 for frame in data_list:
     for particle in frame:
         a2.plot(particle[0],particle[1],'x')
@@ -57,7 +73,7 @@ plt.draw()
 #a3 = f3.gca()
 #p3 = a3.plot
 
-'''
+
 f3 = plt.figure(3,clear=True)
 a3 = f3.gca()
 p3 = a3.plot(x_list[1],y_list[1])
