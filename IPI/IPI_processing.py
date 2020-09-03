@@ -80,7 +80,7 @@ def analyze_IPI(filename,ii,save_images):
         N_fringes = 2*r/shift
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
         #print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
-        data.append(np.array([x*prop['pp'],y*prop['pp'],size]))
+        data.append(np.array([x,y,size]))
     return data
 
 
