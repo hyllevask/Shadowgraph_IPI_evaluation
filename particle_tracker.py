@@ -11,7 +11,7 @@ data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
 dt = 1/5000
 print ('dt = %f' % dt)
 
-tracker = Tracker(dt)
+tracker = Tracker(1)
 
 for ii,dd in enumerate(data_list):
     #print(ii)
@@ -38,25 +38,29 @@ results = tracker.get_results()
 f1 = plt.figure(1,clear=True)
 a1 = f1.gca()
 for (x,y) in zip(x_list,y_list):
-    a1.plot(x,y)
-plt.draw()
+    a1.plot(y,x)
+#plt.draw()
 
-f2 = plt.figure(2,clear=True)
-a2 = f2.gca()
+#f2 = plt.figure(2,clear=True)
+#a2 = f2.gca()
 for (x,y) in zip(xd_list,yd_list):
-    a2.plot(x,y)
+    a1.plot(x,y)
 plt.draw()
 
 f3 = plt.figure(3,clear=True)
 a3 = f3.gca()
-a3.hist(results[:,0]*1e6)
+a3.hist(results[:,0]*1e6, bins=21)
 plt.title("Size distribution")
+plt.xlabel('Diameter [um]')
+plt.ylabel('Count')
 plt.draw()
 
 f4 = plt.figure(4,clear=True)
 a4 = f4.gca()
-a4.hist((np.sqrt(results[:,1]) + np.sqrt(results[:,2]))**2 *1000)
-plt.title("Velocity distribution (mm/2)")
+a4.hist(np.sqrt(results[:,1]**2 + results[:,2]**2) * 0.05/1024 * 5000, bins=21)
+plt.title("Velocity distribution")
+plt.xlabel('m/s')
+plt.ylabel('Count')
 plt.draw()
 
 
