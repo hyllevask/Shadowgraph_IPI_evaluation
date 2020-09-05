@@ -63,6 +63,7 @@ def analyze_IPI(filename,ii,save_images):
             c = plt.Circle((x, y), r,color='red', linewidth=2, fill=False)
             ax.add_patch(c)
         plt.savefig('IPI_result_images/im'+str(ii))
+        plt.close(fig)
 
 
     data = []
