@@ -8,16 +8,16 @@ plt.ion()
 #generate_data('test_data.p',100)
 data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
 #data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
-dt = 1/5000
+dt = 1/10000
 print ('dt = %f' % dt)
 
 
-R = np. array([5,5,5])  #Measurement noise
+R = np. array([5,5,5])*10  #Measurement noise
 Q = np.array([15,15,15,15,15]) #Process noise
-tracker = Tracker(1,R,Q)
+tracker = Tracker(dt,R,Q)
 
 for ii,dd in enumerate(data_list):
-    #print(ii)
+    print(ii)
     tracker.Update_tracks(dd)
 x_list = []
 y_list = []
@@ -52,15 +52,15 @@ plt.draw()
 
 f3 = plt.figure(3,clear=True)
 a3 = f3.gca()
-a3.hist(results[:,0]*1e6, bins=21)
+a3.hist(results[:,0], bins=21)
 plt.title("Size distribution")
-plt.xlabel('Diameter [um]')
+plt.xlabel('Diameter [mm]')
 plt.ylabel('Count')
 plt.draw()
 
 f4 = plt.figure(4,clear=True)
 a4 = f4.gca()
-a4.hist(np.sqrt(results[:,1]**2 + results[:,2]**2) * 0.05/1024 * 5000, bins=21)
+a4.hist(np.sqrt(results[:,1]**2 + results[:,2]**2), bins=21)
 plt.title("Velocity distribution")
 plt.xlabel('m/s')
 plt.ylabel('Count')

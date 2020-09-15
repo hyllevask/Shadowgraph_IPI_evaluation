@@ -46,7 +46,7 @@ class Tracker(object):
         self.tentative_tracks = []
         self.track_count = 0
         self.dt = dt
-        self.max_cost = 10
+        self.max_cost = 1
         self.defult_Q = Q
 
 
@@ -69,7 +69,7 @@ class Tracker(object):
                 temp_track.trace.append(temp_track.kf.x)
                 self.tracks.append(temp_track)
                 self.track_count += 1
-            #print("Complete")
+            print("Complete")
             return
         #print("Updating Tracks")
         # DATA ASSOCIATION
@@ -78,8 +78,10 @@ class Tracker(object):
         M = len(data)
         all_detects = list(range(M))
         cost = np.zeros(shape=(N, M))
+        print("Predict")
         for ii,track in enumerate(self.tracks):
             #Predicts every excisting track
+
             track.kf.predict()
             track.life += 1
             for jj, d in enumerate(data):
@@ -95,6 +97,7 @@ class Tracker(object):
                     cost[ii][jj] = 1e99
         # Using Hungarian Algorithm assign the correct detected measurements
         # to predicted tracks
+        print("assign")
         assignment = []
         for _ in range(N):
             #Flag each element that will be used
@@ -108,7 +111,7 @@ class Tracker(object):
             else:
                 assignment[row_ind[i]] = col_ind[i]
                 all_detects.remove(col_ind[i])
-
+        print("update")
         #Loop over the tracks and update the state with the assigned measurement
         #THe index off assignment is the track and the vale is the corresponding data
         for ii,ass in enumerate(assignment):
@@ -122,7 +125,7 @@ class Tracker(object):
                 continue
 
 
-
+        print("deleting")
         #Check for unassigned tracks
         for ii,track in enumerate(self.tracks):
             if assignment[ii] == -1 or assignment[ii] == -2:
@@ -139,7 +142,7 @@ class Tracker(object):
         updated_tracks = [track for track in self.tracks if track != -1]
 
         self.tracks = updated_tracks
-
+        print("creating")
         #CHeck for unassigned detects
         for detects in all_detects:
             d = data [detects]

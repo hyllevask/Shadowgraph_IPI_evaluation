@@ -18,6 +18,7 @@ parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
 parser.add_argument('--crop',type=tuple,default=(200,600,200,600),help="Crop Limits")
 parser.add_argument('--save_images',type=int, default=1,help = "Saves masks and histograms")
 parser.add_argument('--threshold',type=float,default=0.05,help="Threshold for the LoG blob estimation.")
+parser.add_argument('--pixelpitch', type=float,default=1,help="Pixel Pitch in the image")
 args = parser.parse_args()
 
 prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4,'pp':50e-3/1080}
@@ -81,7 +82,7 @@ def analyze_IPI(filename,ii,save_images):
         N_fringes = 2*r/shift
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
         #print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
-        data.append(np.array([x,y,size]))
+        data.append(np.array([x*args.pixelpitch,y*args.pixelpitch,size]))
     return data
 
 

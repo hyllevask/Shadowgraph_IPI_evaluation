@@ -11,6 +11,7 @@ parser = argparse.ArgumentParser(description='Process the shadowgraph images.')
 parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
 parser.add_argument('--crop',type=tuple,default=(200,600,200,600),help="Crop Limits")
 parser.add_argument('--save_images',type=int, default=0,help = "Saves masks and histograms")
+parser.add_argument('--pixelpitch', type=float,default=1,help="Pixel Pitch in the image")
 args = parser.parse_args()
 
 #Setup the main function
@@ -18,6 +19,7 @@ args = parser.parse_args()
 def main():
     #Pandas is used to store the data for each frame and
     import pickle
+
     listan = []     #The numpy arrays will be stored in this array
     if args.save_images == 1:
         print("Image Save Enabled")
@@ -59,7 +61,7 @@ def analyze_image(filename,ii,save_images):
     #Extract the area for each particle
     for prop in props:
         r,c = prop.centroid
-        data.append(np.array([r,c,prop.area]))
+        data.append(np.array([r*args.pixelpitch,c*args.pixelpitch,np.sqrt(prop.area)*args.pixelpitch]))
     if save_images == 1:
         #Generate and save images
         plt.figure(1,clear=True)
