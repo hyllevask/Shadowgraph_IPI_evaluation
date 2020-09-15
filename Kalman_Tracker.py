@@ -3,26 +3,28 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 # Partly inspired by https://github.com/srianant/kalman_filter_multi_object_tracking/blob/master/tracker.py
 
+#todo FIxa så att man kan mata in de förväntade brusnivåerna in i trackern
+
 class Track(object):
     """"
     Class for each track. A kalman filter estimates the position, velocity and size of each particle
 
     """
-    def __init__(self,x,y,r,t_ID,dt):
+    def __init__(self,x,y,r,t_ID,dt,Q_noise, R_noise):
         self.kf = KalmanFilter(dim_x=5,dim_z=3)        #(x,y,dx,dy,r)
         self.kf.x = np.array([x,y,0,0,r])
-        self.kf.F = np.array([[1,0,dt,0,0],
+        self.kf.F = np.array([[1,0,dt,0,0], #Transition model
                          [0,1,0,dt,0],
                          [0,0,1,0,0],
                          [0,0,0,1,0],
                          [0,0,0,0,1]])
 
-        self.kf.H = np.array([[1,0,0,0,0],
+        self.kf.H = np.array([[1,0,0,0,0],  #Observation model
                         [0,1,0,0,0],
                         [0,0,0,0,1]])
-        self.kf.P = self.kf.P * 100.
-        self.kf.R = np.eye(3)*4
-
+        self.kf.P = self.kf.P * 100.    #Initial covariance matrix
+        self.kf.R = np.diag(R_noise)         #Measurement noise
+        self.kf.Q = np.diag(Q_noise)         #Process noise
 
         self.track_ID = t_ID
         self.undetected_frames = 0
@@ -38,23 +40,32 @@ class Track(object):
 class Tracker(object):
 
 
-    def __init__(self,dt):
+    def __init__(self,dt,R,Q):
         self.tracks = []
         self.deleted_tracks = []
         self.tentative_tracks = []
         self.track_count = 0
         self.dt = dt
         self.max_cost = 10
+        self.defult_Q = Q
 
-    def Update_tracks(self,data):
+
+        #self.defult_P =
+        self.defult_R = R
+
+    def Update_tracks(self,data,dt = 0):
         #Data is a list where each element is a tuple with x,y,r
-
+        #It is possible to add a custum timestep (if the sampling is uneven). Defult dt is taken from the creation
         #If no tracks are stored create new tracks from the data
+
+        if dt == 0:
+            dt = self.dt
+
         if (len(self.tracks) == 0):
             print("Initiating Tracks")
             for d in data:
                 x,y,r = d
-                temp_track = Track(x,y,r,self.track_count,self.dt)
+                temp_track = Track(x,y,r,self.track_count,self.dt,self.defult_Q,self.defult_R)
                 temp_track.trace.append(temp_track.kf.x)
                 self.tracks.append(temp_track)
                 self.track_count += 1
@@ -133,7 +144,7 @@ class Tracker(object):
         for detects in all_detects:
             d = data [detects]
             x,y,r = data[detects]
-            self.tracks.append(Track(x,y,r,self.track_count,self.dt))
+            self.tracks.append(Track(x,y,r,self.track_count,self.dt,self.defult_Q,self.defult_R))
             self.track_count += 1
 
         #print("Adding Track")
@@ -142,11 +153,6 @@ class Tracker(object):
             if track.life > 2 and track.tentative == True and track.undetected_frames < 3:
 
                 track.tentative = False
-
-
-
-
-
 
 
 

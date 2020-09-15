@@ -6,12 +6,15 @@ plt.ion()
 
 #Generate or load data
 #generate_data('test_data.p',100)
-#data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
-data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
+data_list = pickle.load(open('Shadowgraph/processed_data.p','rb'))
+#data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
 dt = 1/5000
 print ('dt = %f' % dt)
 
-tracker = Tracker(1)
+
+R = np. array([5,5,5])  #Measurement noise
+Q = np.array([15,15,15,15,15]) #Process noise
+tracker = Tracker(1,R,Q)
 
 for ii,dd in enumerate(data_list):
     #print(ii)
