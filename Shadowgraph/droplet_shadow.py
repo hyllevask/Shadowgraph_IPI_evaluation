@@ -9,7 +9,7 @@ import numpy as np
 #Setup the parser for commandline interface
 parser = argparse.ArgumentParser(description='Process the shadowgraph images.')
 parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
-parser.add_argument('--crop',type=tuple,default=(200,600,200,600),help="Crop Limits")
+parser.add_argument('--crop',type=tuple,default=(220,530,220,530),help="Crop Limits")
 parser.add_argument('--save_images',type=int, default=0,help = "Saves masks and histograms")
 parser.add_argument('--pixelpitch', type=float,default=1,help="Pixel Pitch in the image")
 args = parser.parse_args()
@@ -23,8 +23,8 @@ def main():
     listan = []     #The numpy arrays will be stored in this array
     if args.save_images == 1:
         print("Image Save Enabled")
-        if not os.path.exists("result_images"):
-            os.mkdir("result_images")       #Make result folder if it does not exsist
+        if not os.path.exists(args.indir +"/result_images"):
+            os.mkdir(args.indir +"/result_images")       #Make result folder if it does not exsist
     #Loop over the files in the dir
     for ii,filename in enumerate(os.listdir(args.indir)):
         print(ii)
@@ -66,7 +66,7 @@ def analyze_image(filename,ii,save_images):
         #Generate and save images
         plt.figure(1,clear=True)
         plt.imshow(im < 180)
-        plt.savefig('result_images/bw'+str(ii))
+        plt.savefig(args.indir + '/result_images/bw'+str(ii))
         #plt.figure(2,clear=True)
         #hist, hist_centers =skimage.exposure.histogram(np.array(area))
         #plt.plot(hist_centers,hist,lw=2)
