@@ -34,8 +34,8 @@ def main():
             listan.append(data)
         else:
             continue
-
-    pickle.dump(listan,open('processed_data.p','wb'))
+    save_path = args.indir + "\processed_data.p"
+    pickle.dump(listan,open(save_path,'wb'))
     #Create a dictionary from the list of results and make a dataframe from it
     #df = pd.DataFrame({ i:pd.Series(value) for i, value in enumerate(listan) })
     #Save the dataframe as csv
