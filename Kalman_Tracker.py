@@ -46,7 +46,7 @@ class Tracker(object):
         self.tentative_tracks = []
         self.track_count = 0
         self.dt = dt
-        self.max_cost = 1
+        self.max_cost = 3000
         self.defult_Q = Q
 
 
@@ -81,16 +81,16 @@ class Tracker(object):
         print("Predict")
         for ii,track in enumerate(self.tracks):
             #Predicts every excisting track
-
+            x_pred = track.kf.x[0]
+            y_pred = track.kf.x[1]
+            r_pred = track.kf.x[-1]
             track.kf.predict()
             track.life += 1
             for jj, d in enumerate(data):
                 x,y,r = d
-                x_pred = track.kf.x[0]
-                y_pred = track.kf.x[1]
-                r_pred = track.kf.x[-1]
 
-                distance = np.sqrt((x_pred-x)**2 + (y_pred-y)**2 + (r_pred-r)**2)
+
+                distance = np.sqrt((x_pred-x)**2 + (y_pred-y)**2) #+ (r_pred-r)**2)
                 if distance < self.max_cost:
                     cost[ii][jj] = distance
                 else:
@@ -134,9 +134,10 @@ class Tracker(object):
         #print("Deleting Track")
         for ii,track in enumerate(self.tracks):
             if track.undetected_frames > 2:
-
-                self.deleted_tracks.append(track)
+                if not track.tentative:
+                    self.deleted_tracks.append(track)
                 self.tracks[ii] = -1
+
 
 
         updated_tracks = [track for track in self.tracks if track != -1]
@@ -145,7 +146,7 @@ class Tracker(object):
         print("creating")
         #CHeck for unassigned detects
         for detects in all_detects:
-            d = data [detects]
+            d = data[detects]
             x,y,r = data[detects]
             self.tracks.append(Track(x,y,r,self.track_count,self.dt,self.defult_Q,self.defult_R))
             self.track_count += 1
@@ -153,7 +154,7 @@ class Tracker(object):
         #print("Adding Track")
         #Possibly start new tracks
         for track in self.tracks:
-            if track.life > 2 and track.tentative == True and track.undetected_frames < 3:
+            if track.life > 5 and track.tentative == True and track.undetected_frames < 3:
 
                 track.tentative = False
 
@@ -167,13 +168,12 @@ class Tracker(object):
         results = np.zeros(shape=(all_tracks.__len__(), 3))
         for ii,track in enumerate(all_tracks):
             #print(ii)
-            if track.trace.__len__() > 3:
+            if track.trace.__len__() > 15 and not track.tentative:
                 results[ii,0] = np.mean(np.array([x[-1] for x in track.trace]))
-                results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))/self.dt
-                results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))/self.dt
+                results[ii,1] = np.mean(np.array([x[-3] for x in track.trace]))
+                results[ii,2] = np.mean(np.array([x[-2] for x in track.trace]))
             else:
                 results[ii,:] = np.nan
         results = results[~np.isnan(results).any(axis=1)]
 
         return results
-

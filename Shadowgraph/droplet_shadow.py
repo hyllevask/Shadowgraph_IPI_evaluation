@@ -5,13 +5,13 @@ import argparse
 import os
 import numpy as np
 
-
 #Setup the parser for commandline interface
 parser = argparse.ArgumentParser(description='Process the shadowgraph images.')
 parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
 parser.add_argument('--crop',type=tuple,default=(220,530,220,530),help="Crop Limits")
 parser.add_argument('--save_images',type=int, default=0,help = "Saves masks and histograms")
 parser.add_argument('--pixelpitch', type=float,default=1,help="Pixel Pitch in the image")
+parser.add_argument('--th', type=int,default=180,help='Threshold for binarization')
 args = parser.parse_args()
 
 #Setup the main function
@@ -20,6 +20,7 @@ def main():
     #Pandas is used to store the data for each frame and
     import pickle
 
+    print("th: %i" % args.th)
     listan = []     #The numpy arrays will be stored in this array
     if args.save_images == 1:
         print("Image Save Enabled")
@@ -50,10 +51,10 @@ def analyze_image(filename,ii,save_images):
     #read and crop the input
     im = plt.imread(args.indir +'/'+ filename)
     crop_limits = args.crop
-    im = im[crop_limits[0]:crop_limits[1],crop_limits[2]:crop_limits[3]]
+    #im = im[crop_limits[0]:crop_limits[1],crop_limits[2]:crop_limits[3]]
 
     #Do the thresholding
-    im_bw = im < 180
+    im_bw = im < args.th
     #Label and get regionprops
     all_labels = skimage.measure.label(im_bw)
     props = skimage.measure.regionprops(all_labels)
@@ -65,7 +66,7 @@ def analyze_image(filename,ii,save_images):
     if save_images == 1:
         #Generate and save images
         plt.figure(1,clear=True)
-        plt.imshow(im < 180)
+        plt.imshow(im < args.th)
         plt.savefig(args.indir + '/result_images/bw'+str(ii))
         #plt.figure(2,clear=True)
         #hist, hist_centers =skimage.exposure.histogram(np.array(area))
