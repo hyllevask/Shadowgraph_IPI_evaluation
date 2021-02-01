@@ -6,8 +6,8 @@ plt.ion()
 
 #Generate or load data
 #generate_data('test_data.p',100)
-data_list = pickle.load(open('E:/Johan/Baseline/talking_p_2mm_fukt_C001H001S0001/processed_data.p','rb'))
-#data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
+#data_list = pickle.load(open('E:/Johan/Baseline/talking_p_2mm_fukt_C001H001S0001/processed_data.p','rb'))
+data_list = pickle.load(open('IPI/processed_IPI_data.p','rb'))
 dt = 1/10000
 print ('dt = %f' % dt)
 

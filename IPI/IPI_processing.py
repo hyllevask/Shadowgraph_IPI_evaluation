@@ -1,91 +1,146 @@
 #mainfile for running
 
 #Imort libreries
-import argparse
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import skimage.measure, skimage.exposure, skimage.filters
-from skimage.feature import blob_log
+from skimage.feature import blob_log,blob_doh
+from skimage.filters import sobel_v,gaussian
+from scipy.signal import correlate2d
 import pandas as pd
 from scipy.signal import correlate2d, find_peaks
 import pickle
+from skimage.feature import peak_local_max
 
+#Specify the arguments!
+args = lambda:0
+args.save_images = 1
+args.indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
+args.threshold = 0.08   #Threshold for the LoG blob estimation.
+#args.threshold = 0.5   #Threshold for the DOH blob estimation.
+args.pixelpitch = 50e-3/1080
 
-#Setup the parser for commandline interface
-parser = argparse.ArgumentParser(description='Process the IPI images.')
-parser.add_argument('--indir',type=str,default='data',help = 'Input Directory')
-parser.add_argument('--crop',type=tuple,default=(200,600,200,600),help="Crop Limits")
-parser.add_argument('--save_images',type=int, default=1,help = "Saves masks and histograms")
-parser.add_argument('--threshold',type=float,default=0.05,help="Threshold for the LoG blob estimation.")
-parser.add_argument('--pixelpitch', type=float,default=1,help="Pixel Pitch in the image")
-args = parser.parse_args()
 
 prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4,'pp':50e-3/1080}
 
 
-def main():
-    #Pandas is used to store the data for each frame and
 
+
+###################################################################################
+#                           MAIN                                                  #
+###################################################################################
+def main():
     listan = []     #The numpy arrays will be stored in this array
-    if args.save_images == 1:
+    if args.save_images == 1:   
         print("Image Save Enabled")
-        if not os.path.exists("IPI_result_images"):
-            os.mkdir("IPI_result_images")       #Make result folder if it does not exsist
-    #Loop over the files in the dir
-    for ii,filename in enumerate(os.listdir(args.indir)):
+        if not os.path.exists(args.indir +"/result_images"):
+            os.mkdir(args.indir +"/result_images")                  #Make result folder if it does not exsist
+   
+    #Get list of files and sort them so they are in order (originally sorted by OS indexing)
+    item_list = os.listdir(args.indir)
+    item_list.sort()
+    for ii,filename in enumerate(item_list):
         print(ii)
+        #if ii == 10:
+        #    break#For testing
         if filename.endswith(('.bmp','.png')):
             #Call the main analyzing function
             data = analyze_IPI(filename,ii,args.save_images)
             listan.append(data)
         else:
             continue
-    pickle.dump(listan,open('processed_IPI_data.p','wb'))
+    pickle.dump(listan,open(args.indir +'processed_IPI_data.p','wb'))
 
+
+
+
+
+
+###########################################################################
+#                       FUNCTIONS                                         #
+###########################################################################
 def analyze_IPI(filename,ii,save_images):
     #Finds the defocused particles using LoG blob detection.
     #Each particle is then processed to find the size estimate
 
-    #Read images
+
     im = plt.imread(args.indir + '/' + filename)
     #Use the LoG blob detection
-    blobs = blob_log(im,min_sigma=8,max_sigma=20,num_sigma=10,threshold=args.threshold)
-    #Scale to correct radii
-    blobs[:,2] = blobs[:,2]*np.sqrt(2)
+   
 
-    #plot
-    #todo make it optional to plot
+    particles = find_particles(im,63,3)
+    
+
+
+    #blobs = blob_log(im,min_sigma=20,max_sigma=40,num_sigma=10,threshold=args.threshold)
+    #Scale to correct radii
+    #blobs[:,2] = blobs[:,2]*np.sqrt(2)
+
+    #plot/save with circle
     if save_images == 1:
+        print("Saving")
         fig,ax = plt.subplots(1)
         ax.imshow(im, cmap='gray')
-        for blob in blobs:
-            y, x, r = blob
+        for particle in particles:
+            y, x = particle
+            r = 63
             c = plt.Circle((x, y), r,color='red', linewidth=2, fill=False)
             ax.add_patch(c)
-        plt.savefig('IPI_result_images/im'+str(ii))
+        plt.savefig(args.indir +"/result_images/im"+str(ii),dpi = 600)
         plt.close(fig)
 
-
+    #Hit fungerar det idag
+    #TODO Se till att de 
     data = []
-    for ii,blob in enumerate(blobs):
-        x, y, r = blob
+    for ii,particle in enumerate(particles):
+        y, x = particle
         r_rounded = np.floor(r)
         subimage = im[int(x-r_rounded):int(x+r_rounded),int(y-r_rounded):int(y+r_rounded)]
         #plt.imshow(subimage)
         #plt.show()
         if subimage.size == 0:
             continue
-        shift = analyze_fringes(subimage,r_rounded)
-        if shift == -1:
-            continue
-        N_fringes = 2*r/shift
+        N_fringes = analyze_fringes_FFT(subimage,r_rounded)
+        #if shift == -1:
+        #    continue
+        #N_fringes = 2*r/shift      #OLD FORMULATIONS
+
+
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
         #print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
         data.append(np.array([x*args.pixelpitch,y*args.pixelpitch,size]))
     return data
 
+def find_particles(im,d,s):
+    im2 = rescale_im(im,20,200)
+    grad_im = (sobel_v(gaussian(im2,sigma=s)))
+    space = 10
+    mask_im = np.zeros((d+space,d+space))     #r even
+    
 
+    x = np.arange(start=0,stop=d+space,step=1)
+
+    grid = np.meshgrid(x,x)
+    
+    mask_im[(grid[0]-(d/2+space/2))**2 + (grid[1]-(d/2+space/2))**2 <(d/2)**2] = 1
+
+    grad_mask = (sobel_v(gaussian(mask_im,sigma=s)))
+
+    corr_map = correlate2d(grad_im,grad_mask,mode="full")
+    c=corr_map
+    c[c<520] = 0
+
+    coordinates = peak_local_max(c, min_distance=40) - (d+space)/2
+    return list(zip(coordinates[:,0],coordinates[:,1]))
+
+def rescale_im(im,old_th,new_th):
+    im = im/1
+    #im[im<old_th]=0
+    im = (im-old_th)/(255-old_th)
+    im = im*(255-new_th)/(255-old_th)*(255-old_th) +new_th
+    im[im<new_th] = 0
+    return im
 
 
 def analyze_fringes(subimage,r):
@@ -115,8 +170,29 @@ def analyze_fringes(subimage,r):
 
     return first_peak
 
+
+def analyze_fringes_FFT(subimage,r):
+    #im_norm = (subimage - np.mean(subimage))
+    im_norm = (subimage - np.min(subimage))/np.max(subimage)    #Map to [0,1]
+    
+    signal = im_norm.sum(axis=1)
+    signal -= np.mean(signal)
+    signal = np.pad(signal,int((256-signal.size)/2))
+    signal_fft = np.fft.fft(signal)
+    fft_fre=np.fft.fftfreq(n=signal.size,d=1)   #1/pixel
+
+    #Make onesided
+    signal_fft = np.abs(signal_fft[1:int(signal.size/2)])
+    fft_fre = fft_fre[1:int(signal.size/2)]
+
+    freq = fft_fre[np.argmax(signal_fft)]
+    N = 2*r*freq
+
+    #plt.plot(fft_fre,signal_fft)
+    #plt.show()
+    return N
 def fringes2size(N,m,lamb,f_num,theta):
-    alfa = np.arcsin(1/f_num/2/2)
+    alfa = 2*np.arcsin(1/f_num/2)
 
     A = 2*lamb/alfa
     B = (np.cos(theta/2) + (m*np.sin(theta/2)) / np.sqrt(m**2-2*m*np.cos(theta/2) + 1))

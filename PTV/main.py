@@ -4,10 +4,10 @@ import random
 from scipy.optimize import linear_sum_assignment
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
-path = "E:/Johan/Baseline/PulsedLaser/20201006/Run10/processed_data.p"
+path = "C:/Users/johohm/Documents/Corona/Baseline/PulsedLaser/20201015/andning1/processed_data.p"
 
 data = pickle.load(open(path,'rb'))
-max_cost = 15
+max_cost = 25
 particles_in_frame = []
 pp = 40e-3/2448
 dt = 1/5
