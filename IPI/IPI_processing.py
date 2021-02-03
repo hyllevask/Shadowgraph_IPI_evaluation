@@ -14,16 +14,18 @@ import pickle
 from skimage.feature import peak_local_max
 
 #Specify the arguments!
-args = lambda:0
-args.save_images = 1
-args.indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
-args.threshold = 0.08   #Threshold for the LoG blob estimation.
-#args.threshold = 0.5   #Threshold for the DOH blob estimation.
-args.pixelpitch = 50e-3/1080
 
 
+
+## FLAGS ##
+save_images = 1
+indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
+
+#################
+#Define properties for this data
 prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4,'pp':50e-3/1080}
 
+#TODO Use Pythorch for xcorr2
 
 
 
@@ -32,13 +34,13 @@ prop = {'m':1.33, 'lamb':532e-9, 'theta':np.pi/2, 'f_num':4,'pp':50e-3/1080}
 ###################################################################################
 def main():
     listan = []     #The numpy arrays will be stored in this array
-    if args.save_images == 1:   
+    if save_images == 1:   
         print("Image Save Enabled")
-        if not os.path.exists(args.indir +"/result_images"):
-            os.mkdir(args.indir +"/result_images")                  #Make result folder if it does not exsist
+        if not os.path.exists(indir +"/result_images"):
+            os.mkdir(indir +"/result_images")                  #Make result folder if it does not exsist
    
     #Get list of files and sort them so they are in order (originally sorted by OS indexing)
-    item_list = os.listdir(args.indir)
+    item_list = os.listdir(indir)
     item_list.sort()
     for ii,filename in enumerate(item_list):
         print(ii)
@@ -46,11 +48,11 @@ def main():
         #    break#For testing
         if filename.endswith(('.bmp','.png')):
             #Call the main analyzing function
-            data = analyze_IPI(filename,ii,args.save_images)
+            data = analyze_IPI(filename,ii,save_images)
             listan.append(data)
         else:
             continue
-    pickle.dump(listan,open(args.indir +'processed_IPI_data.p','wb'))
+    pickle.dump(listan,open(indir +'processed_IPI_data.p','wb'))
 
 
 
@@ -65,19 +67,13 @@ def analyze_IPI(filename,ii,save_images):
     #Each particle is then processed to find the size estimate
 
 
-    im = plt.imread(args.indir + '/' + filename)
+    im = plt.imread(indir + '/' + filename)
     #Use the LoG blob detection
    
 
     particles = find_particles(im,63,3)
     
 
-
-    #blobs = blob_log(im,min_sigma=20,max_sigma=40,num_sigma=10,threshold=args.threshold)
-    #Scale to correct radii
-    #blobs[:,2] = blobs[:,2]*np.sqrt(2)
-
-    #plot/save with circle
     if save_images == 1:
         print("Saving")
         fig,ax = plt.subplots(1)
@@ -87,7 +83,7 @@ def analyze_IPI(filename,ii,save_images):
             r = 63
             c = plt.Circle((x, y), r,color='red', linewidth=2, fill=False)
             ax.add_patch(c)
-        plt.savefig(args.indir +"/result_images/im"+str(ii),dpi = 600)
+        plt.savefig(indir +"/result_images/im"+str(ii),dpi = 600)
         plt.close(fig)
 
     #Hit fungerar det idag
@@ -109,7 +105,7 @@ def analyze_IPI(filename,ii,save_images):
 
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
         #print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
-        data.append(np.array([x*args.pixelpitch,y*args.pixelpitch,size]))
+        data.append(np.array([x*prop['pp'],y*prop['pp'],size]))
     return data
 
 def find_particles(im,d,s):
