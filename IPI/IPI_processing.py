@@ -18,7 +18,8 @@ from skimage.feature import peak_local_max
 
 
 ## FLAGS ##
-save_images = 1
+save_images = 0
+multi = 1
 indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
 
 #################
@@ -42,17 +43,32 @@ def main():
     #Get list of files and sort them so they are in order (originally sorted by OS indexing)
     item_list = os.listdir(indir)
     item_list.sort()
-    for ii,filename in enumerate(item_list):
-        print(ii)
-        #if ii == 10:
-        #    break#For testing
-        if filename.endswith(('.bmp','.png')):
-            #Call the main analyzing function
-            data = analyze_IPI(filename,ii,save_images)
-            listan.append(data)
-        else:
-            continue
-    pickle.dump(listan,open(indir +'processed_IPI_data.p','wb'))
+
+
+    if multi == 1:
+        filtered_list = [item for item in item_list if item.endswith(('.bmp','.png'))]
+        print(filtered_list)
+        import multiprocessing
+        num_cores = multiprocessing.cpu_count()
+        print("Running on % i threds" % num_cores)
+        pool = multiprocessing.Pool(num_cores)
+
+        #out1, out2, out3 = zip(*pool.map(analyze_IPI, item_list))
+        data = zip(*pool.map(analyze_IPI, filtered_list))
+
+    else:
+        print("Running on single thred")
+        for ii,filename in enumerate(item_list):
+            print(ii)
+            #if ii == 10:
+            #    break#For testing
+            if filename.endswith(('.bmp','.png')):
+                #Call the main analyzing function
+                data = analyze_IPI(filename)
+                listan.append(data)
+            else:
+                continue
+    pickle.dump(listan,open(indir +'/processed_IPI_data.p','wb'))
 
 
 
@@ -62,17 +78,18 @@ def main():
 ###########################################################################
 #                       FUNCTIONS                                         #
 ###########################################################################
-def analyze_IPI(filename,ii,save_images):
+def analyze_IPI(filename):
+    print(filename)
     #Finds the defocused particles using LoG blob detection.
     #Each particle is then processed to find the size estimate
-
+    print("Starting")
 
     im = plt.imread(indir + '/' + filename)
     #Use the LoG blob detection
    
-
+    print("Correlating")
     particles = find_particles(im,63,3)
-    
+    r = 63
 
     if save_images == 1:
         print("Saving")
@@ -83,7 +100,7 @@ def analyze_IPI(filename,ii,save_images):
             r = 63
             c = plt.Circle((x, y), r,color='red', linewidth=2, fill=False)
             ax.add_patch(c)
-        plt.savefig(indir +"/result_images/im"+str(ii),dpi = 600)
+        plt.savefig(indir +"/result_images/im"+filename[-3:]+"png",dpi = 600)
         plt.close(fig)
 
     #Hit fungerar det idag
@@ -106,6 +123,8 @@ def analyze_IPI(filename,ii,save_images):
         size = fringes2size(N_fringes, prop['m'], prop['lamb'], prop['f_num'],prop['theta'])
         #print('Particle %i: %i fringes, %f um' % (ii,N_fringes,size*1e6))
         data.append(np.array([x*prop['pp'],y*prop['pp'],size]))
+
+    print("Done")
     return data
 
 def find_particles(im,d,s):
