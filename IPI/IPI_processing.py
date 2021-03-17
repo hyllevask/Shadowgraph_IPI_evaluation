@@ -52,8 +52,9 @@ def main():
         pool = multiprocessing.Pool(num_cores)
 
         #out1, out2, out3 = zip(*pool.map(analyze_IPI, item_list))
-        data = zip(*pool.map(analyze_IPI, filtered_list))
-
+        data = pool.map(analyze_IPI, filtered_list)
+        print(data)
+        pickle.dump(data,open(indir +'/processed_IPI_data.p','wb'))
     else:
         print("Running on single thred")
         for ii,filename in enumerate(item_list):
@@ -66,7 +67,7 @@ def main():
                 listan.append(data)
             else:
                 continue
-    pickle.dump(listan,open(indir +'/processed_IPI_data.p','wb'))
+        pickle.dump(listan,open(indir +'/processed_IPI_data.p','wb'))
 
 
 
@@ -123,6 +124,7 @@ def analyze_IPI(filename):
         data.append(np.array([x*prop['pp'],y*prop['pp'],size]))
 
     print("Done")
+    print(data)
     return data
 
 def find_particles(im,d,s):
