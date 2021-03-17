@@ -15,12 +15,10 @@ from skimage.feature import peak_local_max
 
 #Specify the arguments!
 
-
-
 ## FLAGS ##
-save_images = 0
-multi = 1
-indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
+save_images = 1
+multi = 0
+indir = '/media/johan/Samsung_T5/Corona/Baseline/PulsedLaser/20210315/run16'
 
 #################
 #Define properties for this data
@@ -62,7 +60,7 @@ def main():
             print(ii)
             #if ii == 10:
             #    break#For testing
-            if filename.endswith(('.bmp','.png')):
+            if filename.endswith(('.bmp')):
                 #Call the main analyzing function
                 data = analyze_IPI(filename)
                 listan.append(data)
@@ -88,8 +86,8 @@ def analyze_IPI(filename):
     #Use the LoG blob detection
    
     print("Correlating")
-    particles = find_particles(im,63,3)
-    r = 63
+    particles = find_particles(im,60,3)
+    r = 60
 
     if save_images == 1:
         print("Saving")
@@ -97,17 +95,17 @@ def analyze_IPI(filename):
         ax.imshow(im, cmap='gray')
         for particle in particles:
             y, x = particle
-            r = 63
+            r = 30
             c = plt.Circle((x, y), r,color='red', linewidth=2, fill=False)
             ax.add_patch(c)
-        plt.savefig(indir +"/result_images/im"+filename[-3:]+"png",dpi = 600)
+        plt.savefig(indir +"/result_images/im"+filename[-3:]+".png",dpi = 600)
         plt.close(fig)
 
     #Hit fungerar det idag
     #TODO Se till att de 
     data = []
     for ii,particle in enumerate(particles):
-        y, x = particle
+        x,y = particle
         r_rounded = np.floor(r)
         subimage = im[int(x-r_rounded):int(x+r_rounded),int(y-r_rounded):int(y+r_rounded)]
         #plt.imshow(subimage)
@@ -142,11 +140,16 @@ def find_particles(im,d,s):
 
     grad_mask = (sobel_v(gaussian(mask_im,sigma=s)))
 
+    
+
     corr_map = correlate2d(grad_im,grad_mask,mode="full")
     c=corr_map
-    c[c<520] = 0
+    c[c<2000] = 0
+
 
     coordinates = peak_local_max(c, min_distance=40) - (d+space)/2
+
+
     return list(zip(coordinates[:,0],coordinates[:,1]))
 
 def rescale_im(im,old_th,new_th):
@@ -157,33 +160,6 @@ def rescale_im(im,old_th,new_th):
     im[im<new_th] = 0
     return im
 
-
-def analyze_fringes(subimage,r):
-    r = int(r)
-    im_norm = (subimage - np.mean(subimage))
-    #todo prehaps implement a fringe contrast
-    #fringe_contrast = (np.max(subimage[5:25,5:25]) - np.min(subimage[5:25,5:25]))/(np.max(subimage[5:25,5:25]) + np.min(subimage[5:25,5:25]))
-    #print("Fringe Contrast: %f" % fringe_contrast)
-    #print("r= %f" % r)
-    test = correlate2d(im_norm,im_norm,mode='same')
-    test = test[r-1:,r-1]
-#   For dedugging
-#    lags = np.arange(0,17)
-#    test2 = test /(16-lags + 1)
-#    test2 = test2/test2[0]
-#    test = test/test[0]
-#    plt.plot(test)
-#    plt.plot(test2)
-#    plt.show()
-    peaks = find_peaks(test)
-
-    sorted_peaks = np.sort(peaks[0])
-    if sorted_peaks.__len__() != 0:
-        first_peak = sorted_peaks[0]
-    else:
-        first_peak = -1
-
-    return first_peak
 
 
 def analyze_fringes_FFT(subimage,r):
