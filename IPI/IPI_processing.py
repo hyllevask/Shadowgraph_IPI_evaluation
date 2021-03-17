@@ -44,7 +44,7 @@ def main():
 
 
     if multi == 1:
-        filtered_list = [item for item in item_list if item.endswith(('.bmp','.png'))]
+        filtered_list = [item for item in item_list if item.endswith(('.bmp'))]
         print(filtered_list)
         import multiprocessing
         num_cores = multiprocessing.cpu_count()
