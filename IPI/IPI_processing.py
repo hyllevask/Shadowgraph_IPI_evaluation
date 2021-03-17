@@ -20,7 +20,8 @@ from skimage.feature import peak_local_max
 ## FLAGS ##
 save_images = 0
 multi = 1
-indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
+#indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
+indir = '/home/johan/Documents/run16'
 
 #################
 #Define properties for this data
@@ -54,8 +55,9 @@ def main():
         pool = multiprocessing.Pool(num_cores)
 
         #out1, out2, out3 = zip(*pool.map(analyze_IPI, item_list))
-        data = zip(*pool.map(analyze_IPI, filtered_list))
-
+        data = pool.map(analyze_IPI, filtered_list)
+        print(data)
+        pickle.dump(data,open(indir +'/processed_IPI_data.p','wb'))
     else:
         print("Running on single thred")
         for ii,filename in enumerate(item_list):
@@ -68,7 +70,7 @@ def main():
                 listan.append(data)
             else:
                 continue
-    pickle.dump(listan,open(indir +'/processed_IPI_data.p','wb'))
+        pickle.dump(listan,open(indir +'/processed_IPI_data.p','wb'))
 
 
 
@@ -125,6 +127,7 @@ def analyze_IPI(filename):
         data.append(np.array([x*prop['pp'],y*prop['pp'],size]))
 
     print("Done")
+    print(data)
     return data
 
 def find_particles(im,d,s):
@@ -144,9 +147,11 @@ def find_particles(im,d,s):
 
     corr_map = correlate2d(grad_im,grad_mask,mode="full")
     c=corr_map
-    c[c<520] = 0
+    c[c<2000] = 0
 
     coordinates = peak_local_max(c, min_distance=40) - (d+space)/2
+    #print("Coordinates:")
+    #print((coordinates[:,0]))
     return list(zip(coordinates[:,0],coordinates[:,1]))
 
 def rescale_im(im,old_th,new_th):
