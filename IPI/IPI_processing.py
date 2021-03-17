@@ -16,16 +16,9 @@ from skimage.feature import peak_local_max
 #Specify the arguments!
 
 ## FLAGS ##
-<<<<<<< HEAD
-save_images = 0
-multi = 1
-#indir = '/home/johan/Documents/Datasets/Measurements/Corona/Test_data'
-indir = '/home/johan/Documents/run16'
-=======
 save_images = 1
 multi = 0
 indir = '/media/johan/Samsung_T5/Corona/Baseline/PulsedLaser/20210315/run16'
->>>>>>> bc2a201dd30d9b6109c13b0aa99558be495f6ded
 
 #################
 #Define properties for this data
@@ -154,18 +147,11 @@ def find_particles(im,d,s):
     corr_map = correlate2d(grad_im,grad_mask,mode="full")
     c=corr_map
     c[c<2000] = 0
-<<<<<<< HEAD
-
-    coordinates = peak_local_max(c, min_distance=40) - (d+space)/2
-    #print("Coordinates:")
-    #print((coordinates[:,0]))
-=======
 
 
     coordinates = peak_local_max(c, min_distance=40) - (d+space)/2
 
 
->>>>>>> bc2a201dd30d9b6109c13b0aa99558be495f6ded
     return list(zip(coordinates[:,0],coordinates[:,1]))
 
 def rescale_im(im,old_th,new_th):
